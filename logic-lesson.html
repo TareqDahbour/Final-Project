@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 2 Lesson: Business Logic Flaws | SyberTeam</title>
+  <meta name="description" content="Learn how business logic flaws (CWE-841) let attackers abuse legitimate features, and how to fix them.">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body data-page="logic-lesson">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html" aria-label="SyberTeam home"><span class="brand-mark" aria-hidden="true">S</span>SyberTeam</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
+      <nav aria-label="Main">
+        <ul id="nav-links" class="nav-links">
+          <li><a href="index.html" data-nav="home">Home</a></li>
+          <li><a href="redos-lesson.html" data-nav="lab1">Lab 1</a></li>
+          <li><a href="logic-lesson.html" data-nav="lab2">Lab 2</a></li>
+          <li><a href="proto-lesson.html" data-nav="lab3">Lab 3</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container page lesson">
+    <div class="page-head">
+      <p class="crumb">LAB 2 &middot; LESSON</p>
+      <h1>Business Logic Flaws (CWE-841)</h1>
+      <p>Nothing is &ldquo;broken&rdquo; in the code, yet the application can be made to do things its designers never intended.</p>
+    </div>
+
+    <section aria-labelledby="what">
+      <h2 id="what">1. What is it?</h2>
+      <p>A business logic flaw is a mistake in the <em>rules</em> of an application rather than in how it handles bytes. CWE-841 (Improper Enforcement of Behavioral Workflow) describes the common case: the application expects users to follow a sequence of steps, or to supply sensible values, but never actually checks.</p>
+      <p>There is no payload and no scanner signature. The attacker simply uses the feature in an unexpected way: a negative quantity, a discount code used ten times, a payment step that can be skipped.</p>
+      <div class="callout">
+        <p><strong>Real-world impact.</strong> Free or heavily discounted goods, credit added to wallets, bypassed payments and limits, and loyalty-point farming. These flaws are invisible to automated tools, so they are often found by attackers first.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="how">
+      <h2 id="how">2. How it works</h2>
+      <ol class="steps">
+        <li><strong>Unchecked quantity.</strong> The cart accepts <code>-5</code> of a product. Its price is subtracted from the total, so a negative line item cancels out the price of an expensive one.</li>
+        <li><strong>Stackable coupon.</strong> A 20% coupon is applied every time it is submitted. Ten submissions leave about 11% of the price.</li>
+        <li><strong>Broken workflow.</strong> The total is locked when you click &ldquo;Review order&rdquo;, but payment uses that stale number even if the cart changes afterwards. Add a cheap item, review, add the expensive item, then pay the cheap price.</li>
+      </ol>
+      <figure>
+        <figcaption><span class="badge">Vulnerable</span> Shop logic</figcaption>
+<pre class="code"><code>function addToCart(id, rawQty) {
+  const qty = Number(rawQty);        // -5 and 0.01 are accepted
+  line.qty += qty;
+}
+
+function applyCoupon(code) {
+  if (code === "SAVE20") coupons++;  // can be repeated
+}
+
+function placeOrder() {
+  // trusts the total locked at "review" time
+  const charge = reviewed ? reviewed.total : total();
+  wallet -= charge;                  // negative charge = free money
+}</code></pre>
+      </figure>
+    </section>
+
+    <section aria-labelledby="fix">
+      <h2 id="fix">3. How to fix it</h2>
+      <div class="compare">
+        <figure class="bad">
+          <figcaption><span class="badge">Vulnerable</span></figcaption>
+<pre class="code"><code>const qty = Number(rawQty);
+
+if (code === "SAVE20") coupons++;
+
+const charge = reviewed
+  ? reviewed.total
+  : total();</code></pre>
+        </figure>
+        <figure class="good">
+          <figcaption><span class="badge badge-solid">Fixed</span></figcaption>
+<pre class="code"><code>const qty = parseQty(rawQty); // whole, 1..5
+if (qty === null) reject();
+
+if (coupons >= 1) reject();   // single-use
+
+if (!reviewed) reject();      // enforce order
+if (total() !== reviewed.total)
+  reject();                   // re-verify</code></pre>
+        </figure>
+      </div>
+      <p><strong>Why it works.</strong></p>
+      <ul>
+        <li><strong>Validate every input on the trusted side.</strong> Quantities must be whole numbers inside an allowed range. The client is never the authority.</li>
+        <li><strong>Recalculate from trusted data.</strong> Prices come from your own price list, and the total is recomputed at payment time rather than trusted from an earlier step.</li>
+        <li><strong>Make one-time things one-time.</strong> Track coupon use as state and refuse repeats.</li>
+        <li><strong>Enforce the workflow.</strong> Each step checks that the previous one happened, and any change to the cart invalidates the review so it cannot go stale.</li>
+        <li>Write down the business rules as invariants (&ldquo;a total is never negative&rdquo;) and test that attackers cannot break them.</li>
+      </ul>
+    </section>
+
+    <section class="card cta" aria-labelledby="cta-title">
+      <h2 id="cta-title">Ready to shop for free?</h2>
+      <p>Buy the Laptop Pro (worth $500) with only $100 in your wallet, then switch the fixes on and try again.</p>
+      <a class="btn btn-primary btn-lg" href="logic-lab.html">Start the Lab</a>
+    </section>
+
+    <nav class="pager" aria-label="Lesson navigation">
+      <a class="btn btn-outline" href="redos-lab.html">&larr; Lab 1</a>
+      <a class="btn btn-outline" href="logic-lab.html">Next: Lab 2 &rarr;</a>
+    </nav>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>&copy; SyberTeam. Educational project.</span>
+      <span>Runs entirely in your browser. Never test these techniques on systems you do not own.</span>
+    </div>
+  </footer>
+</body>
+</html>

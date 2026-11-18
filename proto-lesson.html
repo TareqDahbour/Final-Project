@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 3 Lesson: Prototype Pollution | SyberTeam</title>
+  <meta name="description" content="Learn how client-side prototype pollution works and how to fix it.">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body data-page="proto-lesson">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html" aria-label="SyberTeam home"><span class="brand-mark" aria-hidden="true">S</span>SyberTeam</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
+      <nav aria-label="Main">
+        <ul id="nav-links" class="nav-links">
+          <li><a href="index.html" data-nav="home">Home</a></li>
+          <li><a href="redos-lesson.html" data-nav="lab1">Lab 1</a></li>
+          <li><a href="logic-lesson.html" data-nav="lab2">Lab 2</a></li>
+          <li><a href="proto-lesson.html" data-nav="lab3">Lab 3</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container page lesson">
+    <div class="page-head">
+      <p class="crumb">LAB 3 &middot; LESSON</p>
+      <h1>Client-Side Prototype Pollution</h1>
+      <p>How an attacker can add properties to <em>every</em> object in your page by abusing an unsafe merge.</p>
+    </div>
+
+    <section aria-labelledby="what">
+      <h2 id="what">1. What is it?</h2>
+      <p>In JavaScript, objects inherit properties from their <strong>prototype</strong>. Almost every plain object inherits from <code>Object.prototype</code>, so if you add a property there, <em>all</em> objects appear to have it:</p>
+<pre class="code"><code>Object.prototype.isAdmin = true;
+const user = {};
+console.log(user.isAdmin);   // true, never set on user</code></pre>
+      <p>Prototype pollution happens when attacker-controlled input can reach <code>Object.prototype</code>, typically through <code>__proto__</code> or <code>constructor.prototype</code> keys in a URL, JSON or form that is processed by a recursive merge.</p>
+      <div class="callout">
+        <p><strong>Real-world impact.</strong> On its own pollution only changes defaults, but combined with a <strong>gadget</strong> (code that reads a property it assumed was undefined) it can bypass access checks or lead to DOM XSS, for example when an undefined option later flows into <code>innerHTML</code> or a script URL. Popular libraries such as lodash and jQuery have all shipped pollution bugs.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="how">
+      <h2 id="how">2. How it works</h2>
+      <ol class="steps">
+        <li>The page reads settings from the URL, e.g. <code>?theme=dark</code>, and merges them into a config object.</li>
+        <li>The attacker sends <code>?__proto__[isAdmin]=true</code>. The parser produces an object with an own key named <code>__proto__</code>.</li>
+        <li>The merge function recurses into that key. <code>target["__proto__"]</code> is not a normal property: it is <code>Object.prototype</code>, so <code>isAdmin = true</code> is written onto the prototype of everything.</li>
+        <li>Later the gadget runs <code>if (config.isAdmin)</code>. <code>config</code> never had that property, but it now inherits it, and the admin panel opens.</li>
+      </ol>
+      <figure>
+        <figcaption><span class="badge">Vulnerable</span> Recursive merge and gadget</figcaption>
+<pre class="code"><code>function merge(target, source) {
+  for (const key in source) {
+    if (typeof source[key] === "object" &amp;&amp; source[key] !== null) {
+      if (typeof target[key] !== "object") target[key] = {};
+      merge(target[key], source[key]);  // walks into __proto__
+    } else {
+      target[key] = source[key];
+    }
+  }
+  return target;
+}
+
+const config = merge({ theme: "light" }, userInput);
+if (config.isAdmin) showAdminPanel();   // gadget</code></pre>
+      </figure>
+    </section>
+
+    <section aria-labelledby="fix">
+      <h2 id="fix">3. How to fix it</h2>
+      <div class="compare">
+        <figure class="bad">
+          <figcaption><span class="badge">Vulnerable</span></figcaption>
+<pre class="code"><code>for (const key in source) {
+  // any key, inherited too
+  merge(target[key], source[key]);
+}
+const config = merge({}, input);</code></pre>
+        </figure>
+        <figure class="good">
+          <figcaption><span class="badge badge-solid">Fixed</span></figcaption>
+<pre class="code"><code>const FORBIDDEN = ["__proto__",
+  "constructor", "prototype"];
+
+for (const key of Object.keys(source)) {
+  if (FORBIDDEN.includes(key)) continue;
+  /* ...merge safely... */
+}
+const config = safeMerge(
+  Object.create(null), input);</code></pre>
+        </figure>
+      </div>
+      <p><strong>Why it works.</strong></p>
+      <ul>
+        <li><strong>Block the dangerous keys.</strong> Without <code>__proto__</code>, <code>constructor</code> and <code>prototype</code>, user input can never reach <code>Object.prototype</code>.</li>
+        <li><strong>Copy own keys only</strong> (<code>Object.keys</code>, <code>hasOwnProperty</code>) instead of looping with <code>for...in</code>.</li>
+        <li><strong>Use prototype-less containers.</strong> <code>Object.create(null)</code> or a <code>Map</code> has nothing to inherit, so a polluted <code>Object.prototype</code> cannot leak into it.</li>
+        <li><strong>Defence in depth.</strong> <code>Object.freeze(Object.prototype)</code> stops writes entirely, and gadgets should check <code>Object.hasOwn(config, "isAdmin")</code> instead of trusting inherited values. The lab does not freeze the prototype, because a freeze cannot be undone without reloading the page and would break the switch.</li>
+      </ul>
+    </section>
+
+    <section class="card cta" aria-labelledby="cta-title">
+      <h2 id="cta-title">Ready to pollute?</h2>
+      <p>Unlock the admin panel by poisoning <code>Object.prototype</code> through the URL or the settings box, then flip the fix on.</p>
+      <a class="btn btn-primary btn-lg" href="proto-lab.html">Start the Lab</a>
+    </section>
+
+    <nav class="pager" aria-label="Lesson navigation">
+      <a class="btn btn-outline" href="logic-lab.html">&larr; Lab 2</a>
+      <a class="btn btn-outline" href="proto-lab.html">Next: Lab 3 &rarr;</a>
+    </nav>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>&copy; SyberTeam. Educational project.</span>
+      <span>Runs entirely in your browser. Never test these techniques on systems you do not own.</span>
+    </div>
+  </footer>
+</body>
+</html>

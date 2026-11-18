@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 2: Business Logic Flaw | SyberTeam</title>
+  <meta name="description" content="Hands-on business logic lab: abuse a mini shop, then apply the fix.">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body data-page="logic-lab">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html" aria-label="SyberTeam home"><span class="brand-mark" aria-hidden="true">S</span>SyberTeam</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
+      <nav aria-label="Main">
+        <ul id="nav-links" class="nav-links">
+          <li><a href="index.html" data-nav="home">Home</a></li>
+          <li><a href="redos-lesson.html" data-nav="lab1">Lab 1</a></li>
+          <li><a href="logic-lesson.html" data-nav="lab2">Lab 2</a></li>
+          <li><a href="proto-lesson.html" data-nav="lab3">Lab 3</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container page">
+    <div class="page-head">
+      <p class="crumb">LAB 2 &middot; HANDS-ON</p>
+      <h1>Business Logic: Mini Shop</h1>
+      <div class="goal">
+        <strong>Your goal</strong>
+        You have $100 in your wallet. Complete a checkout for far less than the goods are worth (for example the $500 Laptop Pro), or end up with a negative total. The whole shop runs in your browser.
+      </div>
+    </div>
+
+    <section aria-labelledby="hints-title">
+      <h2 id="hints-title">Hints</h2>
+      <details class="disclosure">
+        <summary>Hint 1: What does the shop trust?</summary>
+        <div class="disclosure-body"><p>Look at the order log and the Active code. The shop never questions the quantity box, the coupon button or the review step. Try values a real shopper would never enter.</p></div>
+      </details>
+      <details class="disclosure">
+        <summary>Hint 2: Three different weaknesses</summary>
+        <div class="disclosure-body"><p>There are at least three ways in: a <strong>quantity</strong> that is not a sensible positive number, a <strong>coupon</strong> that is not single-use, and a <strong>workflow</strong> where the price is locked in one step but charged in another.</p></div>
+      </details>
+      <details class="disclosure">
+        <summary>Hint 3: The workflow trick</summary>
+        <div class="disclosure-body"><p>Add something cheap, click <strong>Review order</strong>, then change the cart before you pay. Does the price follow your changes?</p></div>
+      </details>
+      <details class="disclosure">
+        <summary>Show solution</summary>
+        <div class="disclosure-body">
+          <p>With the switch <strong>OFF</strong>, any one of these works:</p>
+          <ol>
+            <li><strong>Negative quantity.</strong> Add Laptop Pro &times; 1, then add Headphones with quantity <code>-5</code>. The total is $500 &minus; $400 = $100, exactly your wallet. Place the order. (A fractional quantity such as <code>0.01</code> also works.)</li>
+            <li><strong>Coupon stacking.</strong> Add Laptop Pro &times; 1 and submit <code>SAVE20</code> ten times. The total drops to about $53.69. Place the order.</li>
+            <li><strong>Stale review.</strong> Add Sticker Pack &times; 1, click <em>Review order</em> (total locked at $5.00), then add Laptop Pro &times; 1 and click <em>Place order</em>. You pay $5.00.</li>
+          </ol>
+          <p>Now turn the switch <strong>ON</strong> and repeat any of them: each is rejected and the order log explains which rule stopped it. You can even build the cheating cart first, then flip the switch and press <em>Place order</em>.</p>
+        </div>
+      </details>
+    </section>
+
+    <section class="card fix-card" aria-labelledby="fix-title" style="margin-top:1.5rem;">
+      <div class="fix-row">
+        <div>
+          <h2 id="fix-title">Fix the vulnerability</h2>
+          <p>OFF runs the vulnerable code. ON runs the patched code. Exploit, flip, then retry.</p>
+        </div>
+        <div class="switch-wrap">
+          <span id="fix-switch-state" class="switch-state">OFF &mdash; vulnerable code</span>
+          <button id="fix-switch" class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="fix-title"><span class="switch-thumb"></span></button>
+        </div>
+      </div>
+    </section>
+
+    <div class="banner-row">
+      <div id="status-banner" class="banner" data-state="unsolved" role="status" aria-live="polite">
+        <strong class="banner-title">Not solved</strong>
+        <span class="banner-detail"></span>
+      </div>
+      <button id="reset-lab" class="btn btn-outline" type="button">Reset lab</button>
+    </div>
+
+    <section class="card" aria-labelledby="shop-title">
+      <h2 id="shop-title">Mini shop</h2>
+      <div class="shop-grid">
+        <div>
+          <h3>Products</h3>
+          <div id="product-list" class="products"></div>
+        </div>
+        <div>
+          <h3>Your cart</h3>
+          <table class="table">
+            <thead><tr><th scope="col">Item</th><th scope="col" class="num">Qty</th><th scope="col" class="num">Line</th><th scope="col"><span class="sr-only" style="position:absolute;left:-999px;">Actions</span></th></tr></thead>
+            <tbody id="cart-body"></tbody>
+          </table>
+          <p id="cart-empty" class="muted">Your cart is empty.</p>
+
+          <form id="coupon-form" class="inline-form" novalidate>
+            <label for="coupon-input" style="position:absolute;left:-999px;">Coupon code</label>
+            <input id="coupon-input" class="input" type="text" autocomplete="off" placeholder="Coupon code (try SAVE20)">
+            <button class="btn btn-outline btn-sm" type="submit">Apply coupon</button>
+          </form>
+
+          <dl class="totals">
+            <dt>Coupons applied</dt><dd id="out-coupons">0</dd>
+            <dt>Order status</dt><dd id="out-review">Not reviewed</dd>
+            <dt>Wallet</dt><dd id="out-balance">$100.00</dd>
+            <dt class="grand">Total</dt><dd id="out-total" class="grand">$0.00</dd>
+          </dl>
+          <div class="btn-row">
+            <button id="btn-review" class="btn btn-outline" type="button">Review order</button>
+            <button id="btn-place" class="btn btn-primary" type="button">Place order</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="log-title">
+      <h2 id="log-title">Order log</h2>
+      <p class="muted">What the &ldquo;app&rdquo; decided, step by step.</p>
+      <ul id="order-log" class="log" role="log" aria-live="off" tabindex="0" aria-label="Order log"></ul>
+    </section>
+
+    <section class="card" aria-labelledby="code-title">
+      <div class="panel-head">
+        <h2 id="code-title">Active code</h2>
+        <span id="code-mode" class="badge">Vulnerable code</span>
+      </div>
+<pre class="code"><code id="active-code"></code></pre>
+    </section>
+
+    <nav class="pager" aria-label="Lab navigation">
+      <a class="btn btn-outline" href="logic-lesson.html">&larr; Lab 2 lesson</a>
+      <a class="btn btn-outline" href="proto-lesson.html">Next: Lab 3 lesson &rarr;</a>
+    </nav>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>&copy; SyberTeam. Educational project.</span>
+      <span>Runs entirely in your browser. Never test these techniques on systems you do not own.</span>
+    </div>
+  </footer>
+</body>
+</html>

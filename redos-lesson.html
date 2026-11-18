@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 1 Lesson: ReDoS | SyberTeam</title>
+  <meta name="description" content="Learn how Regular Expression Denial of Service works and how to fix it.">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body data-page="redos-lesson">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html" aria-label="SyberTeam home"><span class="brand-mark" aria-hidden="true">S</span>SyberTeam</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
+      <nav aria-label="Main">
+        <ul id="nav-links" class="nav-links">
+          <li><a href="index.html" data-nav="home">Home</a></li>
+          <li><a href="redos-lesson.html" data-nav="lab1">Lab 1</a></li>
+          <li><a href="logic-lesson.html" data-nav="lab2">Lab 2</a></li>
+          <li><a href="proto-lesson.html" data-nav="lab3">Lab 3</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container page lesson">
+    <div class="page-head">
+      <p class="crumb">LAB 1 &middot; LESSON</p>
+      <h1>Regular Expression Denial of Service (ReDoS)</h1>
+      <p>How one innocent-looking regex can pin a CPU at 100% with a single short string.</p>
+    </div>
+
+    <section aria-labelledby="what">
+      <h2 id="what">1. What is it?</h2>
+      <p>Most regex engines (including JavaScript's) use <strong>backtracking</strong>: when a pattern fails to match, the engine goes back and tries the other ways it could have matched. For well-written patterns that is cheap. For patterns with <strong>nested or overlapping quantifiers</strong>, such as <code>(a+)+</code>, the number of alternatives explodes exponentially with the input length.</p>
+      <p>A ReDoS attack sends an input that <em>almost</em> matches, forcing the engine to try every alternative before it gives up.</p>
+      <div class="callout">
+        <p><strong>Real-world impact.</strong> JavaScript runs on a single thread, so a stuck regex freezes the whole page or blocks a whole Node.js server. Regex backtracking was behind a global Cloudflare outage in 2019 and a Stack Overflow outage in 2016. One request can take a service down, which makes it cheap for an attacker and expensive for the victim.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="how">
+      <h2 id="how">2. How it works</h2>
+      <ol class="steps">
+        <li>The app validates usernames with <code>/^([a-z0-9]+)+$/i</code>. For normal input it is instant.</li>
+        <li>The attacker sends many valid characters followed by one invalid one: <code>aaaa...aaaa!</code></li>
+        <li>The trailing <code>!</code> makes the match fail, so the engine backtracks and tries every way of splitting the <code>a</code>s between the inner <code>+</code> and the outer <code>+</code>.</li>
+        <li>Each extra character roughly <strong>doubles</strong> the work. 25 characters takes milliseconds, 35 takes minutes.</li>
+      </ol>
+      <figure>
+        <figcaption><span class="badge">Vulnerable</span> Username validator</figcaption>
+<pre class="code"><code>// Nested quantifier: (x+)+
+const USERNAME_RE = /^([a-z0-9]+)+$/i;
+
+function isValidUsername(name) {
+  return USERNAME_RE.test(name);   // no length limit
+}
+
+isValidUsername("alice2026");                          // true, instant
+isValidUsername("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!"); // hangs</code></pre>
+      </figure>
+    </section>
+
+    <section aria-labelledby="fix">
+      <h2 id="fix">3. How to fix it</h2>
+      <div class="compare">
+        <figure class="bad">
+          <figcaption><span class="badge">Vulnerable</span></figcaption>
+<pre class="code"><code>const USERNAME_RE = /^([a-z0-9]+)+$/i;
+
+function isValidUsername(name) {
+  return USERNAME_RE.test(name);
+}</code></pre>
+        </figure>
+        <figure class="good">
+          <figcaption><span class="badge badge-solid">Fixed</span></figcaption>
+<pre class="code"><code>const MAX_LEN = 20;
+const USERNAME_RE = /^[a-z0-9]+$/i;
+
+function isValidUsername(name) {
+  if (name.length > MAX_LEN) return false;
+  return USERNAME_RE.test(name);
+}</code></pre>
+        </figure>
+      </div>
+      <p><strong>Why it works.</strong></p>
+      <ul>
+        <li><code>[a-z0-9]+</code> has a single quantifier, so there is only one way to match each character. The engine makes one pass and the cost grows linearly (O(n)).</li>
+        <li>The length limit rejects oversized input before any regex runs, which caps the worst case even if another pattern is imperfect.</li>
+        <li>Defence in depth: avoid nested quantifiers and overlapping alternations, prefer linear-time engines such as RE2 for untrusted input, and run risky matching with a timeout or in a worker.</li>
+      </ul>
+    </section>
+
+    <section class="card cta" aria-labelledby="cta-title">
+      <h2 id="cta-title">Ready to break it?</h2>
+      <p>Craft an input that makes the validator run for more than 2 seconds, then turn the fix on and try again.</p>
+      <a class="btn btn-primary btn-lg" href="redos-lab.html">Start the Lab</a>
+    </section>
+
+    <nav class="pager" aria-label="Lesson navigation">
+      <a class="btn btn-outline" href="index.html">&larr; Home</a>
+      <a class="btn btn-outline" href="redos-lab.html">Next: Lab 1 &rarr;</a>
+    </nav>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>&copy; SyberTeam. Educational project.</span>
+      <span>Runs entirely in your browser. Never test these techniques on systems you do not own.</span>
+    </div>
+  </footer>
+</body>
+</html>

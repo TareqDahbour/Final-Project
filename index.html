@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SyberTeam | Learn web security by breaking it safely</title>
+  <meta name="description" content="SyberTeam is a hands-on web security training site. Exploit three vulnerabilities in a safe sandbox, then flip a switch to see the fix stop them.">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body data-page="home">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html" aria-label="SyberTeam home"><span class="brand-mark" aria-hidden="true">S</span>SyberTeam</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
+      <nav aria-label="Main">
+        <ul id="nav-links" class="nav-links">
+          <li><a href="index.html" data-nav="home">Home</a></li>
+          <li><a href="redos-lesson.html" data-nav="lab1">Lab 1</a></li>
+          <li><a href="logic-lesson.html" data-nav="lab2">Lab 2</a></li>
+          <li><a href="proto-lesson.html" data-nav="lab3">Lab 3</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="container">
+        <span class="eyebrow">// web security academy</span>
+        <h1 id="hero-title">SyberTeam</h1>
+        <p class="lead">Learn three real web vulnerabilities by exploiting them yourself in a safe sandbox, then flip one switch to see exactly how the fix stops the same attack.</p>
+        <ul class="hero-steps" aria-label="How each lab works">
+          <li>1. Read the lesson</li>
+          <li>2. Exploit the lab</li>
+          <li>3. Turn the fix on</li>
+          <li>4. Retry and watch it fail</li>
+        </ul>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="redos-lesson.html">Start with Lab 1</a>
+          <a class="btn btn-outline btn-lg" href="#labs">Browse the labs</a>
+        </div>
+        <p class="muted" style="margin-top:1.5rem;font-size:0.9rem;">Everything runs inside your browser. There is no server, no network traffic and no real target.</p>
+      </div>
+    </section>
+
+    <section class="section" id="labs" aria-labelledby="labs-title">
+      <div class="container">
+        <h2 id="labs-title" class="section-title">The labs</h2>
+        <div class="grid-3">
+          <article class="card card-hover lab-card" data-lab="redos">
+            <span class="lab-num">LAB 1</span>
+            <h3>Regular Expression DoS (ReDoS)</h3>
+            <p>Freeze a username validator with a single crafted string and see why nested quantifiers are dangerous.</p>
+            <div class="card-foot">
+              <span class="badge badge-mid">Easy</span>
+              <span class="solved-tag" hidden>&#10003; Solved</span>
+              <a class="btn btn-primary btn-sm" href="redos-lesson.html">Start</a>
+            </div>
+          </article>
+
+          <article class="card card-hover lab-card" data-lab="logic">
+            <span class="lab-num">LAB 2</span>
+            <h3>Business Logic Flaw</h3>
+            <p>Buy a laptop for the price of a sticker by abusing quantities, coupons and the checkout workflow.</p>
+            <div class="card-foot">
+              <span class="badge">Medium</span>
+              <span class="solved-tag" hidden>&#10003; Solved</span>
+              <a class="btn btn-primary btn-sm" href="logic-lesson.html">Start</a>
+            </div>
+          </article>
+
+          <article class="card card-hover lab-card" data-lab="proto">
+            <span class="lab-num">LAB 3</span>
+            <h3>Client-Side Prototype Pollution</h3>
+            <p>Poison Object.prototype through an unsafe merge and unlock an admin panel you were never given.</p>
+            <div class="card-foot">
+              <span class="badge badge-solid">Hard</span>
+              <span class="solved-tag" hidden>&#10003; Solved</span>
+              <a class="btn btn-primary btn-sm" href="proto-lesson.html">Start</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="team" aria-labelledby="team-title" style="padding-top:0;">
+      <div class="container">
+        <h2 id="team-title" class="section-title">Our Team</h2>
+        <div class="team-grid">
+          <!-- Edit each member's name, role and GitHub link below. -->
+          <article class="card member">
+            <div class="avatar" aria-hidden="true">M1</div>
+            <h3>Member 1 Name</h3>
+            <p class="role">Role (edit me)</p>
+            <a class="btn btn-outline btn-sm" href="https://github.com/username1" target="_blank" rel="noopener noreferrer">GitHub</a>
+          </article>
+          <article class="card member">
+            <div class="avatar" aria-hidden="true">M2</div>
+            <h3>Member 2 Name</h3>
+            <p class="role">Role (edit me)</p>
+            <a class="btn btn-outline btn-sm" href="https://github.com/username2" target="_blank" rel="noopener noreferrer">GitHub</a>
+          </article>
+          <article class="card member">
+            <div class="avatar" aria-hidden="true">M3</div>
+            <h3>Member 3 Name</h3>
+            <p class="role">Role (edit me)</p>
+            <a class="btn btn-outline btn-sm" href="https://github.com/username3" target="_blank" rel="noopener noreferrer">GitHub</a>
+          </article>
+          <article class="card member">
+            <div class="avatar" aria-hidden="true">M4</div>
+            <h3>Member 4 Name</h3>
+            <p class="role">Role (edit me)</p>
+            <a class="btn btn-outline btn-sm" href="https://github.com/username4" target="_blank" rel="noopener noreferrer">GitHub</a>
+          </article>
+          <article class="card member">
+            <div class="avatar" aria-hidden="true">M5</div>
+            <h3>Member 5 Name</h3>
+            <p class="role">Role (edit me)</p>
+            <a class="btn btn-outline btn-sm" href="https://github.com/username5" target="_blank" rel="noopener noreferrer">GitHub</a>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>&copy; SyberTeam. Educational project.</span>
+      <span>Runs entirely in your browser. Never test these techniques on systems you do not own.</span>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 1: ReDoS | SyberTeam</title>
+  <meta name="description" content="Hands-on ReDoS lab: trigger catastrophic backtracking safely, then apply the fix.">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body data-page="redos-lab">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html" aria-label="SyberTeam home"><span class="brand-mark" aria-hidden="true">S</span>SyberTeam</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
+      <nav aria-label="Main">
+        <ul id="nav-links" class="nav-links">
+          <li><a href="index.html" data-nav="home">Home</a></li>
+          <li><a href="redos-lesson.html" data-nav="lab1">Lab 1</a></li>
+          <li><a href="logic-lesson.html" data-nav="lab2">Lab 2</a></li>
+          <li><a href="proto-lesson.html" data-nav="lab3">Lab 3</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container page">
+    <div class="page-head">
+      <p class="crumb">LAB 1 &middot; HANDS-ON</p>
+      <h1>ReDoS: Username Validator</h1>
+      <div class="goal">
+        <strong>Your goal</strong>
+        Make the username validator run for more than 2 seconds with a single input. The regex runs in a sandboxed Web Worker, so your tab will never freeze.
+      </div>
+    </div>
+
+    <section aria-labelledby="hints-title">
+      <h2 id="hints-title">Hints</h2>
+      <details class="disclosure">
+        <summary>Hint 1: What is the validator doing?</summary>
+        <div class="disclosure-body"><p>Open the <em>Active code</em> panel below. The pattern has a quantifier inside a group that is itself quantified: <code>([a-z0-9]+)+</code>. That is the shape that causes catastrophic backtracking.</p></div>
+      </details>
+      <details class="disclosure">
+        <summary>Hint 2: What input hurts it most?</summary>
+        <div class="disclosure-body"><p>You need a string that is almost valid: many allowed characters, then one character that makes the match fail at the very end. The <strong>Safe sample</strong> button fills in a normal username so you can see a fast run. The <strong>Attack sample</strong> button fills in a long near-miss string. Both buttons only fill the box: you still press <strong>Test</strong> yourself.</p></div>
+      </details>
+      <details class="disclosure">
+        <summary>Hint 3: How long should it be?</summary>
+        <div class="disclosure-body"><p>Each extra character roughly doubles the time. Around 30 characters is already several seconds. Watch the live timer: the lab is solved once it passes 2000 ms.</p></div>
+      </details>
+      <details class="disclosure">
+        <summary>Show solution</summary>
+        <div class="disclosure-body">
+          <p>With the switch <strong>OFF</strong>, enter 35 letter <code>a</code> characters followed by <code>!</code>:</p>
+<pre class="code"><code>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!</code></pre>
+          <p>Press <strong>Test</strong>. The regex cannot match because of the final <code>!</code>, so it tries every way to split the <code>a</code>s between the two <code>+</code> operators. After 2 seconds the worker is terminated and the lab is marked solved. On a very fast machine, add more <code>a</code> characters.</p>
+          <p>Now turn the switch <strong>ON</strong> and test the same string: it is rejected instantly.</p>
+        </div>
+      </details>
+    </section>
+
+    <section class="card fix-card" aria-labelledby="fix-title" style="margin-top:1.5rem;">
+      <div class="fix-row">
+        <div>
+          <h2 id="fix-title">Fix the vulnerability</h2>
+          <p>OFF runs the vulnerable code. ON runs the patched code. Exploit, flip, then retry.</p>
+        </div>
+        <div class="switch-wrap">
+          <span id="fix-switch-state" class="switch-state">OFF &mdash; vulnerable code</span>
+          <button id="fix-switch" class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="fix-title"><span class="switch-thumb"></span></button>
+        </div>
+      </div>
+    </section>
+
+    <div class="banner-row">
+      <div id="status-banner" class="banner" data-state="unsolved" role="status" aria-live="polite">
+        <strong class="banner-title">Not solved</strong>
+        <span class="banner-detail"></span>
+      </div>
+      <button id="reset-lab" class="btn btn-outline" type="button">Reset lab</button>
+    </div>
+
+    <section class="card" aria-labelledby="comp-title">
+      <h2 id="comp-title">Username validator</h2>
+      <form id="redos-form" novalidate>
+        <div class="field">
+          <label for="username">Choose a username</label>
+          <input id="username" class="input" type="text" autocomplete="off" spellcheck="false" placeholder="letters and digits only">
+        </div>
+        <div class="btn-row">
+          <button id="btn-test" class="btn btn-primary" type="submit">Test</button>
+          <button id="btn-stop" class="btn btn-outline" type="button" disabled>Stop</button>
+          <button id="btn-safe" class="btn btn-outline" type="button">Safe sample</button>
+          <button id="btn-attack" class="btn btn-outline" type="button">Attack sample</button>
+        </div>
+      </form>
+      <dl class="readouts">
+        <div class="readout"><dt>Input length</dt><dd id="out-length">0</dd></div>
+        <div class="readout"><dt>Execution time</dt><dd id="out-time">&mdash;</dd></div>
+        <div class="readout"><dt>Result</dt><dd id="out-result">Ready.</dd></div>
+      </dl>
+    </section>
+
+    <section class="card" aria-labelledby="code-title">
+      <div class="panel-head">
+        <h2 id="code-title">Active code</h2>
+        <span id="code-mode" class="badge">Vulnerable code</span>
+      </div>
+<pre class="code"><code id="active-code"></code></pre>
+    </section>
+
+    <nav class="pager" aria-label="Lab navigation">
+      <a class="btn btn-outline" href="redos-lesson.html">&larr; Lab 1 lesson</a>
+      <a class="btn btn-outline" href="logic-lesson.html">Next: Lab 2 lesson &rarr;</a>
+    </nav>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>&copy; SyberTeam. Educational project.</span>
+      <span>Runs entirely in your browser. Never test these techniques on systems you do not own.</span>
+    </div>
+  </footer>
+</body>
+</html>

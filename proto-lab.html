@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 3: Prototype Pollution | SyberTeam</title>
+  <meta name="description" content="Hands-on prototype pollution lab: pollute Object.prototype safely, then apply the fix.">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body data-page="proto-lab">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html" aria-label="SyberTeam home"><span class="brand-mark" aria-hidden="true">S</span>SyberTeam</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
+      <nav aria-label="Main">
+        <ul id="nav-links" class="nav-links">
+          <li><a href="index.html" data-nav="home">Home</a></li>
+          <li><a href="redos-lesson.html" data-nav="lab1">Lab 1</a></li>
+          <li><a href="logic-lesson.html" data-nav="lab2">Lab 2</a></li>
+          <li><a href="proto-lesson.html" data-nav="lab3">Lab 3</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container page">
+    <div class="page-head">
+      <p class="crumb">LAB 3 &middot; HANDS-ON</p>
+      <h1>Prototype Pollution: Settings Page</h1>
+      <div class="goal">
+        <strong>Your goal</strong>
+        Unlock the admin panel. The app removes a top-level <code>isAdmin</code> key from your input, so you must get <code>config.isAdmin</code> to become true some other way. Settings can come from the box below or from the page URL (<code>?query</code> or <code>#hash</code>).
+      </div>
+    </div>
+
+    <section aria-labelledby="hints-title">
+      <h2 id="hints-title">Hints</h2>
+      <details class="disclosure">
+        <summary>Hint 1: Where is the gadget?</summary>
+        <div class="disclosure-body"><p>The page runs <code>if (config.isAdmin)</code>, but <code>config</code> is never given an <code>isAdmin</code> of its own. Where else could a value come from? Think about the prototype chain.</p></div>
+      </details>
+      <details class="disclosure">
+        <summary>Hint 2: Reach the prototype</summary>
+        <div class="disclosure-body"><p>The merge function copies nested objects recursively. Which special key, when merged into <em>any</em> object, points to <code>Object.prototype</code>? Use bracket notation in a query string, such as <code>a[b]=1</code>, or nested objects in JSON.</p></div>
+      </details>
+      <details class="disclosure">
+        <summary>Hint 3: Check the live view</summary>
+        <div class="disclosure-body"><p>The <em>Object.prototype state</em> panel shows any property that was added after the page loaded. If the key shows up there, you have polluted the prototype.</p></div>
+      </details>
+      <details class="disclosure">
+        <summary>Show solution</summary>
+        <div class="disclosure-body">
+          <p>With the switch <strong>OFF</strong>, submit any one of these in the box:</p>
+<pre class="code"><code>?__proto__[isAdmin]=true</code></pre>
+<pre class="code"><code>{"__proto__": {"isAdmin": true}}</code></pre>
+<pre class="code"><code>{"constructor": {"prototype": {"isAdmin": true}}}</code></pre>
+          <p>Or put it in the address bar: <code>proto-lab.html?__proto__[isAdmin]=true</code> (or <code>#__proto__[isAdmin]=true</code>). The merge writes <code>isAdmin</code> onto <code>Object.prototype</code>, so <code>config.isAdmin</code> is inherited and the gadget opens the panel.</p>
+          <p>Sending <code>{"isAdmin": true}</code> directly does not work: the app strips it. Turn the switch <strong>ON</strong> and repeat the payload: the forbidden key is skipped and nothing is polluted.</p>
+        </div>
+      </details>
+    </section>
+
+    <section class="card fix-card" aria-labelledby="fix-title" style="margin-top:1.5rem;">
+      <div class="fix-row">
+        <div>
+          <h2 id="fix-title">Fix the vulnerability</h2>
+          <p>OFF runs the vulnerable code. ON runs the patched code. Exploit, flip, then retry.</p>
+        </div>
+        <div class="switch-wrap">
+          <span id="fix-switch-state" class="switch-state">OFF &mdash; vulnerable code</span>
+          <button id="fix-switch" class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="fix-title"><span class="switch-thumb"></span></button>
+        </div>
+      </div>
+    </section>
+
+    <div class="banner-row">
+      <div id="status-banner" class="banner" data-state="unsolved" role="status" aria-live="polite">
+        <strong class="banner-title">Not solved</strong>
+        <span class="banner-detail"></span>
+      </div>
+      <button id="reset-lab" class="btn btn-outline" type="button">Reset lab</button>
+    </div>
+
+    <section class="card" aria-labelledby="comp-title">
+      <h2 id="comp-title">Settings loader</h2>
+      <form id="proto-form" novalidate>
+        <div class="field">
+          <label for="proto-input">Settings (query string or JSON object)</label>
+          <textarea id="proto-input" class="input" spellcheck="false" placeholder="theme=dark&amp;language=ar   or   {&quot;theme&quot;:&quot;dark&quot;}"></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" type="submit">Apply settings</button>
+          <button id="btn-benign" class="btn btn-outline" type="button">Benign sample</button>
+          <button id="btn-url" class="btn btn-outline" type="button">Apply via URL</button>
+        </div>
+      </form>
+      <p id="out-note" class="muted" role="status" style="margin-top:0.75rem;"></p>
+
+      <div class="proto-grid">
+        <div>
+          <h3>Parsed input</h3>
+<pre class="code"><code id="out-parsed"></code></pre>
+        </div>
+        <div>
+          <h3>Resulting config</h3>
+<pre class="code"><code id="out-config"></code></pre>
+        </div>
+        <div>
+          <h3>Gadget</h3>
+<pre class="code"><code id="out-gadget"></code></pre>
+        </div>
+        <div>
+          <h3>Object.prototype state</h3>
+<pre class="code"><code id="out-proto"></code></pre>
+        </div>
+      </div>
+
+      <div id="locked-panel" class="locked-panel">Admin panel locked. Only administrators can see it.</div>
+      <div id="admin-panel" class="admin-panel" hidden>
+        <h3>Admin panel unlocked</h3>
+        <p>Welcome, administrator. You never sent <code>isAdmin</code> as a setting, yet the gadget trusted it.</p>
+        <p style="margin:0;">Secret flag: <code>FLAG{prototype_pollution_gadget_fired}</code></p>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="code-title">
+      <div class="panel-head">
+        <h2 id="code-title">Active code</h2>
+        <span id="code-mode" class="badge">Vulnerable code</span>
+      </div>
+<pre class="code"><code id="active-code"></code></pre>
+    </section>
+
+    <nav class="pager" aria-label="Lab navigation">
+      <a class="btn btn-outline" href="proto-lesson.html">&larr; Lab 3 lesson</a>
+      <a class="btn btn-outline" href="index.html">Finish: Home &rarr;</a>
+    </nav>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>&copy; SyberTeam. Educational project.</span>
+      <span>Runs entirely in your browser. Never test these techniques on systems you do not own.</span>
+    </div>
+  </footer>
+</body>
+</html>
