@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lab 3: Prototype Pollution | SyberTeam</title>
-  <meta name="description" content="Hands-on prototype pollution lab: pollute Object.prototype safely, then apply the fix.">
+  <title>Lab 3: Prototype Pollution (CWE-1321) | CyberTeam</title>
+  <meta name="description" content="Hands-on prototype pollution lab (CWE-1321): pollute Object.prototype safely, then apply the fix.">
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
 </head>
@@ -13,13 +13,13 @@
 
   <header class="site-header">
     <div class="container nav">
-      <a class="brand" href="index.html" aria-label="SyberTeam home"><span class="brand-mark" aria-hidden="true">S</span>SyberTeam</a>
+      <a class="brand" href="index.html" aria-label="CyberTeam home"><span class="brand-mark" aria-hidden="true">C</span>CyberTeam</a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
       <nav aria-label="Main">
         <ul id="nav-links" class="nav-links">
           <li><a href="index.html" data-nav="home">Home</a></li>
-          <li><a href="redos-lesson.html" data-nav="lab1">Lab 1</a></li>
-          <li><a href="logic-lesson.html" data-nav="lab2">Lab 2</a></li>
+          <li><a href="logic-lesson.html" data-nav="lab1">Lab 1</a></li>
+          <li><a href="redos-lesson.html" data-nav="lab2">Lab 2</a></li>
           <li><a href="proto-lesson.html" data-nav="lab3">Lab 3</a></li>
         </ul>
       </nav>
@@ -28,7 +28,7 @@
 
   <main id="main" class="container page">
     <div class="page-head">
-      <p class="crumb">LAB 3 &middot; HANDS-ON</p>
+      <p class="crumb">LAB 3 &middot; HANDS-ON &middot; <a href="https://cwe.mitre.org/data/definitions/1321.html" target="_blank" rel="noopener noreferrer">CWE-1321</a></p>
       <h1>Prototype Pollution: Settings Page</h1>
       <div class="goal">
         <strong>Your goal</strong>
@@ -57,7 +57,7 @@
 <pre class="code"><code>?__proto__[isAdmin]=true</code></pre>
 <pre class="code"><code>{"__proto__": {"isAdmin": true}}</code></pre>
 <pre class="code"><code>{"constructor": {"prototype": {"isAdmin": true}}}</code></pre>
-          <p>Or put it in the address bar: <code>proto-lab.html?__proto__[isAdmin]=true</code> (or <code>#__proto__[isAdmin]=true</code>). The merge writes <code>isAdmin</code> onto <code>Object.prototype</code>, so <code>config.isAdmin</code> is inherited and the gadget opens the panel.</p>
+          <p>The <strong>Try payload</strong> button fills in <code>?__proto__[isAdmin]=true</code> and applies it for you. The merge writes <code>isAdmin</code> onto <code>Object.prototype</code>, so <code>config.isAdmin</code> is inherited and the gadget opens the panel.</p>
           <p>Sending <code>{"isAdmin": true}</code> directly does not work: the app strips it. Turn the switch <strong>ON</strong> and repeat the payload: the forbidden key is skipped and nothing is polluted.</p>
         </div>
       </details>
@@ -94,7 +94,7 @@
         <div class="btn-row">
           <button class="btn btn-primary" type="submit">Apply settings</button>
           <button id="btn-benign" class="btn btn-outline" type="button">Benign sample</button>
-          <button id="btn-url" class="btn btn-outline" type="button">Apply via URL</button>
+          <button id="btn-payload" class="btn btn-outline" type="button">Try payload</button>
         </div>
       </form>
       <p id="out-note" class="muted" role="status" style="margin-top:0.75rem;"></p>
@@ -132,6 +132,7 @@
         <span id="code-mode" class="badge">Vulnerable code</span>
       </div>
 <pre class="code"><code id="active-code"></code></pre>
+      <p id="code-legend" class="code-legend" data-mode="vuln">Highlighted = vulnerable code</p>
     </section>
 
     <nav class="pager" aria-label="Lab navigation">
@@ -142,7 +143,7 @@
 
   <footer class="site-footer">
     <div class="container">
-      <span>&copy; SyberTeam. Educational project.</span>
+      <span>&copy; CyberTeam. Educational project.</span>
       <span>Runs entirely in your browser. Never test these techniques on systems you do not own.</span>
     </div>
   </footer>
