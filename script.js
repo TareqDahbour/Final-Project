@@ -1,5 +1,5 @@
 /* =====================================================================
-   SyberTeam — shared script.js
+   CyberTeam — shared script.js
    Pure vanilla JavaScript. No network requests, no eval, no libraries.
 
    Sections
@@ -7,8 +7,8 @@
      2. Navbar
      3. Shared lab helpers (switch, banner, code panel, solved state)
      4. Home page
-     5. Lab 1 — ReDoS
-     6. Lab 2 — Business logic flaw
+     5. Lab 2 — ReDoS
+     6. Lab 1 — Business logic flaw
      7. Lab 3 — Client-side prototype pollution
      8. Bootstrap (page router, guarded by <body data-page="...">)
    ===================================================================== */
@@ -57,8 +57,8 @@
      ------------------------------------------------------------------- */
   var NAV_MAP = {
     'home': 'home',
-    'redos-lesson': 'lab1', 'redos-lab': 'lab1',
-    'logic-lesson': 'lab2', 'logic-lab': 'lab2',
+    'logic-lesson': 'lab1', 'logic-lab': 'lab1',
+    'redos-lesson': 'lab2', 'redos-lab': 'lab2',
     'proto-lesson': 'lab3', 'proto-lab': 'lab3'
   };
 
@@ -122,14 +122,42 @@
     else { setBanner('unsolved', LAB_TEXT[lab].goal); }
   }
 
-  // Updates the "Active code" panel.
+  // Code rendering with highlighted lines. A line ending in "//~vuln" marks a
+  // vulnerable line, "//~fix" a key fix line. The marker is stripped before
+  // display. Output is built with DOM APIs and textContent only (never
+  // innerHTML), and every line is a block-level <span>, so copied text has
+  // no extra blank lines.
+  var MARKER_RE = /\s*\/\/~(vuln|fix)\s*$/;
+
+  function renderCode(el, code, fixed) {
+    var want = fixed ? 'fix' : 'vuln';
+    el.textContent = '';
+    code.split('\n').forEach(function (raw) {
+      var m = raw.match(MARKER_RE);
+      var span = document.createElement('span');
+      span.className = 'code-line';
+      if (m && m[1] === want) { span.classList.add(fixed ? 'hl-fix' : 'hl-vuln'); }
+      var text = m ? raw.replace(MARKER_RE, '') : raw;
+      // An empty line holds a single newline: it keeps its height and is
+      // preserved when the code is copied (empty block elements are skipped).
+      span.textContent = text === '' ? '\n' : text;
+      el.appendChild(span);
+    });
+  }
+
+  // Updates the "Active code" panel, its badge and its legend.
   function setCodePanel(code, fixed) {
     var codeEl = $('#active-code');
     var badge = $('#code-mode');
-    if (codeEl) { codeEl.textContent = code; }
+    var legend = $('#code-legend');
+    if (codeEl) { renderCode(codeEl, code, fixed); }
     if (badge) {
       badge.textContent = fixed ? 'Fixed code' : 'Vulnerable code';
       badge.classList.toggle('badge-solid', fixed);
+    }
+    if (legend) {
+      legend.setAttribute('data-mode', fixed ? 'fixed' : 'vuln');
+      legend.textContent = fixed ? 'Highlighted = key fix lines' : 'Highlighted = vulnerable code';
     }
   }
 
@@ -167,14 +195,14 @@
   }
 
   /* -------------------------------------------------------------------
-     5. LAB 1 — ReDoS
+     5. LAB 2 — ReDoS
      ------------------------------------------------------------------- */
   var REDOS_VULN_CODE =
     '// VULNERABLE: nested quantifier (x+)+ causes catastrophic backtracking.\n' +
-    'const USERNAME_RE = /^([a-z0-9]+)+$/i;\n' +
+    'const USERNAME_RE = /^([a-z0-9]+)+$/i; //~vuln\n' +
     '\n' +
     'function isValidUsername(name) {\n' +
-    '  return USERNAME_RE.test(name);   // no length limit, runs on any input\n' +
+    '  return USERNAME_RE.test(name);   // no length limit, runs on any input //~vuln\n' +
     '}\n' +
     '\n' +
     '// "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!" almost matches, so the engine\n' +
@@ -183,10 +211,10 @@
   var REDOS_FIXED_CODE =
     '// FIXED: 1) hard length limit, 2) linear-time regex (no nested quantifier).\n' +
     'const MAX_LEN = 20;\n' +
-    'const USERNAME_RE = /^[a-z0-9]+$/i;\n' +
+    'const USERNAME_RE = /^[a-z0-9]+$/i; //~fix\n' +
     '\n' +
     'function isValidUsername(name) {\n' +
-    '  if (name.length > MAX_LEN) return false;   // reject before any regex runs\n' +
+    '  if (name.length > MAX_LEN) return false;   // reject before any regex runs //~fix\n' +
     '  return USERNAME_RE.test(name);             // O(n): one pass, no backtracking\n' +
     '}';
 
@@ -364,43 +392,43 @@
   }
 
   /* -------------------------------------------------------------------
-     6. LAB 2 — BUSINESS LOGIC FLAW
+     6. LAB 1 — BUSINESS LOGIC FLAW
      ------------------------------------------------------------------- */
   var LOGIC_VULN_CODE =
     '// VULNERABLE: the client-side "app" trusts quantities, coupons and its own state.\n' +
     'function addToCart(id, rawQty) {\n' +
-    '  const qty = Number(rawQty);          // -5? 0.01? both accepted\n' +
+    '  const qty = Number(rawQty);          // -5? 0.01? both accepted //~vuln\n' +
     '  line.qty += qty;\n' +
     '}\n' +
     'function applyCoupon(code) {\n' +
-    '  if (code === "SAVE20") coupons++;    // can be applied again and again\n' +
+    '  if (code === "SAVE20") coupons++;    // can be applied again and again //~vuln\n' +
     '}\n' +
     'function total() {                     // total = price * qty * 0.8^coupons\n' +
     '  return subtotal * Math.pow(0.8, coupons);\n' +
     '}\n' +
     'function placeOrder() {\n' +
     '  // uses the total locked at "review" time, even if the cart changed since\n' +
-    '  const charge = reviewed ? reviewed.total : total();\n' +
-    '  wallet -= charge;                    // a negative charge CREDITS the wallet\n' +
+    '  const charge = reviewed ? reviewed.total : total(); //~vuln\n' +
+    '  wallet -= charge;                    // a negative charge CREDITS the wallet //~vuln\n' +
     '}';
 
   var LOGIC_FIXED_CODE =
     '// FIXED: validate every input and re-derive every number from trusted data.\n' +
     'function parseQty(raw) {\n' +
-    '  if (!/^\\d+$/.test(String(raw).trim())) return null;   // whole numbers only\n' +
+    '  if (!/^\\d+$/.test(String(raw).trim())) return null;   // whole numbers only //~fix\n' +
     '  const n = Number(raw);\n' +
     '  return n >= 1 && n <= MAX_QTY ? n : null;               // 1..5\n' +
     '}\n' +
     'function applyCoupon(code) {\n' +
-    '  if (coupons >= 1) throw new Error("Coupon already used");  // single-use\n' +
+    '  if (coupons >= 1) throw new Error("Coupon already used");  // single-use //~fix\n' +
     '}\n' +
     'function total() {                    // prices come from the trusted list\n' +
     '  return sum(cart, l => TRUSTED_PRICES[l.id] * l.qty) * (coupons ? 0.8 : 1);\n' +
     '}\n' +
     'function placeOrder() {\n' +
-    '  if (!reviewed) throw new Error("Review step required");   // workflow order\n' +
+    '  if (!reviewed) throw new Error("Review step required");   // workflow order //~fix\n' +
     '  validateCart();                                            // re-check everything\n' +
-    '  if (total() !== reviewed.total) throw new Error("Cart changed after review");\n' +
+    '  if (total() !== reviewed.total) throw new Error("Cart changed after review"); //~fix\n' +
     '  wallet -= total();\n' +
     '}\n' +
     '// Any cart or coupon change also invalidates the review.';
@@ -749,9 +777,9 @@
     '  for (const key in source) {\n' +
     '    if (typeof source[key] === "object" && source[key] !== null) {\n' +
     '      if (typeof target[key] !== "object") target[key] = {};\n' +
-    '      merge(target[key], source[key]);   // target["__proto__"] IS Object.prototype\n' +
+    '      merge(target[key], source[key]);   // target["__proto__"] IS Object.prototype //~vuln\n' +
     '    } else {\n' +
-    '      target[key] = source[key];\n' +
+    '      target[key] = source[key]; //~vuln\n' +
     '    }\n' +
     '  }\n' +
     '  return target;\n' +
@@ -759,7 +787,7 @@
     '\n' +
     'const config = merge({ theme: "light" }, userInput);\n' +
     '// Gadget: reads a property that was never set on config itself.\n' +
-    'if (config.isAdmin) showAdminPanel();';
+    'if (config.isAdmin) showAdminPanel(); //~vuln';
 
   var PROTO_FIXED_CODE =
     '// FIXED: block dangerous keys, only copy own keys, use a prototype-less target.\n' +
@@ -767,7 +795,7 @@
     '\n' +
     'function safeMerge(target, source) {\n' +
     '  for (const key of Object.keys(source)) {      // own enumerable keys only\n' +
-    '    if (FORBIDDEN.includes(key)) continue;       // never walk into the prototype\n' +
+    '    if (FORBIDDEN.includes(key)) continue;       // never walk into the prototype //~fix\n' +
     '    const value = source[key];\n' +
     '    if (typeof value === "object" && value !== null) {\n' +
     '      if (typeof target[key] !== "object") target[key] = Object.create(null);\n' +
@@ -779,7 +807,7 @@
     '  return target;\n' +
     '}\n' +
     '\n' +
-    'const config = safeMerge(Object.create(null), userInput);   // no prototype to inherit from\n' +
+    'const config = safeMerge(Object.create(null), userInput);   // no prototype to inherit from //~fix\n' +
     'if (config.isAdmin) showAdminPanel();                        // undefined: gadget stays shut';
 
   function hasOwn(obj, key) { return Object.prototype.hasOwnProperty.call(obj, key); }
@@ -866,7 +894,7 @@
     var form = $('#proto-form');
     var input = $('#proto-input');
     var btnBenign = $('#btn-benign');
-    var btnUrl = $('#btn-url');
+    var btnPayload = $('#btn-payload');
     var outParsed = $('#out-parsed');
     var outConfig = $('#out-config');
     var outGadget = $('#out-gadget');
@@ -1007,13 +1035,11 @@
 
     form.addEventListener('submit', function (event) { event.preventDefault(); applySettings(input.value, 'form'); });
     btnBenign.addEventListener('click', function () { input.value = 'theme=dark&language=ar'; input.focus(); });
-    btnUrl.addEventListener('click', function () {
-      var text = input.value.trim();
-      if (text.charAt(0) === '{') {
-        outNote.textContent = 'URL mode needs a query string such as ?theme=dark, not JSON.';
-        return;
-      }
-      window.location.search = '?' + text.replace(/^[?#]/, '');   // page reloads and reads location.search
+    // "Try payload" fills the classic payload and runs it through the same
+    // pipeline as "Apply settings".
+    btnPayload.addEventListener('click', function () {
+      input.value = '?__proto__[isAdmin]=true';
+      applySettings(input.value);
     });
     btnReset.addEventListener('click', resetLab);
 
