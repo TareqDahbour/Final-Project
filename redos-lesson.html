@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lab 1 Lesson: ReDoS | SyberTeam</title>
-  <meta name="description" content="Learn how Regular Expression Denial of Service works and how to fix it.">
+  <title>Lab 2 Lesson: ReDoS (CWE-1333) | CyberTeam</title>
+  <meta name="description" content="Learn how Regular Expression Denial of Service (CWE-1333) works and how to fix it.">
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
 </head>
@@ -13,13 +13,13 @@
 
   <header class="site-header">
     <div class="container nav">
-      <a class="brand" href="index.html" aria-label="SyberTeam home"><span class="brand-mark" aria-hidden="true">S</span>SyberTeam</a>
+      <a class="brand" href="index.html" aria-label="CyberTeam home"><span class="brand-mark" aria-hidden="true">C</span>CyberTeam</a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
       <nav aria-label="Main">
         <ul id="nav-links" class="nav-links">
           <li><a href="index.html" data-nav="home">Home</a></li>
-          <li><a href="redos-lesson.html" data-nav="lab1">Lab 1</a></li>
-          <li><a href="logic-lesson.html" data-nav="lab2">Lab 2</a></li>
+          <li><a href="logic-lesson.html" data-nav="lab1">Lab 1</a></li>
+          <li><a href="redos-lesson.html" data-nav="lab2">Lab 2</a></li>
           <li><a href="proto-lesson.html" data-nav="lab3">Lab 3</a></li>
         </ul>
       </nav>
@@ -28,14 +28,15 @@
 
   <main id="main" class="container page lesson">
     <div class="page-head">
-      <p class="crumb">LAB 1 &middot; LESSON</p>
-      <h1>Regular Expression Denial of Service (ReDoS)</h1>
-      <p>How one innocent-looking regex can pin a CPU at 100% with a single short string.</p>
+      <p class="crumb">LAB 2 &middot; LESSON</p>
+      <h1>ReDoS (CWE-1333)</h1>
+      <p>Regular Expression Denial of Service: how one innocent-looking regex can pin a CPU at 100% with a single short string.</p>
     </div>
 
     <section aria-labelledby="what">
       <h2 id="what">1. What is it?</h2>
       <p>Most regex engines (including JavaScript's) use <strong>backtracking</strong>: when a pattern fails to match, the engine goes back and tries the other ways it could have matched. For well-written patterns that is cheap. For patterns with <strong>nested or overlapping quantifiers</strong>, such as <code>(a+)+</code>, the number of alternatives explodes exponentially with the input length.</p>
+      <p><a href="https://cwe.mitre.org/data/definitions/1333.html" target="_blank" rel="noopener noreferrer">CWE-1333</a> (Inefficient Regular Expression Complexity) describes the weakness: a regular expression whose matching time grows far faster than the input, so a short crafted string can exhaust the CPU. It is a kind of inefficient algorithmic complexity (parent weakness <a href="https://cwe.mitre.org/data/definitions/407.html" target="_blank" rel="noopener noreferrer">CWE-407</a>).</p>
       <p>A ReDoS attack sends an input that <em>almost</em> matches, forcing the engine to try every alternative before it gives up.</p>
       <div class="callout">
         <p><strong>Real-world impact.</strong> JavaScript runs on a single thread, so a stuck regex freezes the whole page or blocks a whole Node.js server. Regex backtracking was behind a global Cloudflare outage in 2019 and a Stack Overflow outage in 2016. One request can take a service down, which makes it cheap for an attacker and expensive for the victim.</p>
@@ -53,11 +54,9 @@
       <figure>
         <figcaption><span class="badge">Vulnerable</span> Username validator</figcaption>
 <pre class="code"><code>// Nested quantifier: (x+)+
-const USERNAME_RE = /^([a-z0-9]+)+$/i;
-
+<span class="hl-vuln">const USERNAME_RE = /^([a-z0-9]+)+$/i;</span>
 function isValidUsername(name) {
-  return USERNAME_RE.test(name);   // no length limit
-}
+<span class="hl-vuln">  return USERNAME_RE.test(name);   // no length limit</span>}
 
 isValidUsername("alice2026");                          // true, instant
 isValidUsername("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!"); // hangs</code></pre>
@@ -69,11 +68,9 @@ isValidUsername("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!"); // hangs</code></pre>
       <div class="compare">
         <figure class="bad">
           <figcaption><span class="badge">Vulnerable</span></figcaption>
-<pre class="code"><code>const USERNAME_RE = /^([a-z0-9]+)+$/i;
-
+<pre class="code"><code><span class="hl-vuln">const USERNAME_RE = /^([a-z0-9]+)+$/i;</span>
 function isValidUsername(name) {
-  return USERNAME_RE.test(name);
-}</code></pre>
+<span class="hl-vuln">  return USERNAME_RE.test(name);</span>}</code></pre>
         </figure>
         <figure class="good">
           <figcaption><span class="badge badge-solid">Fixed</span></figcaption>
@@ -101,14 +98,14 @@ function isValidUsername(name) {
     </section>
 
     <nav class="pager" aria-label="Lesson navigation">
-      <a class="btn btn-outline" href="index.html">&larr; Home</a>
-      <a class="btn btn-outline" href="redos-lab.html">Next: Lab 1 &rarr;</a>
+      <a class="btn btn-outline" href="logic-lab.html">&larr; Lab 1</a>
+      <a class="btn btn-outline" href="redos-lab.html">Next: Lab 2 &rarr;</a>
     </nav>
   </main>
 
   <footer class="site-footer">
     <div class="container">
-      <span>&copy; SyberTeam. Educational project.</span>
+      <span>&copy; CyberTeam. Educational project.</span>
       <span>Runs entirely in your browser. Never test these techniques on systems you do not own.</span>
     </div>
   </footer>
