@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lab 2 Lesson: Business Logic Flaws | SyberTeam</title>
+  <title>Lab 1 Lesson: Business Logic Flaws (CWE-841) | CyberTeam</title>
   <meta name="description" content="Learn how business logic flaws (CWE-841) let attackers abuse legitimate features, and how to fix them.">
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
@@ -13,13 +13,13 @@
 
   <header class="site-header">
     <div class="container nav">
-      <a class="brand" href="index.html" aria-label="SyberTeam home"><span class="brand-mark" aria-hidden="true">S</span>SyberTeam</a>
+      <a class="brand" href="index.html" aria-label="CyberTeam home"><span class="brand-mark" aria-hidden="true">C</span>CyberTeam</a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
       <nav aria-label="Main">
         <ul id="nav-links" class="nav-links">
           <li><a href="index.html" data-nav="home">Home</a></li>
-          <li><a href="redos-lesson.html" data-nav="lab1">Lab 1</a></li>
-          <li><a href="logic-lesson.html" data-nav="lab2">Lab 2</a></li>
+          <li><a href="logic-lesson.html" data-nav="lab1">Lab 1</a></li>
+          <li><a href="redos-lesson.html" data-nav="lab2">Lab 2</a></li>
           <li><a href="proto-lesson.html" data-nav="lab3">Lab 3</a></li>
         </ul>
       </nav>
@@ -28,14 +28,14 @@
 
   <main id="main" class="container page lesson">
     <div class="page-head">
-      <p class="crumb">LAB 2 &middot; LESSON</p>
+      <p class="crumb">LAB 1 &middot; LESSON</p>
       <h1>Business Logic Flaws (CWE-841)</h1>
       <p>Nothing is &ldquo;broken&rdquo; in the code, yet the application can be made to do things its designers never intended.</p>
     </div>
 
     <section aria-labelledby="what">
       <h2 id="what">1. What is it?</h2>
-      <p>A business logic flaw is a mistake in the <em>rules</em> of an application rather than in how it handles bytes. CWE-841 (Improper Enforcement of Behavioral Workflow) describes the common case: the application expects users to follow a sequence of steps, or to supply sensible values, but never actually checks.</p>
+      <p>A business logic flaw is a mistake in the <em>rules</em> of an application rather than in how it handles bytes. <a href="https://cwe.mitre.org/data/definitions/841.html" target="_blank" rel="noopener noreferrer">CWE-841</a> (Improper Enforcement of Behavioral Workflow) describes the common case: the application expects users to follow a sequence of steps, or to supply sensible values, but never actually checks.</p>
       <p>There is no payload and no scanner signature. The attacker simply uses the feature in an unexpected way: a negative quantity, a discount code used ten times, a payment step that can be skipped.</p>
       <div class="callout">
         <p><strong>Real-world impact.</strong> Free or heavily discounted goods, credit added to wallets, bypassed payments and limits, and loyalty-point farming. These flaws are invisible to automated tools, so they are often found by attackers first.</p>
@@ -52,19 +52,15 @@
       <figure>
         <figcaption><span class="badge">Vulnerable</span> Shop logic</figcaption>
 <pre class="code"><code>function addToCart(id, rawQty) {
-  const qty = Number(rawQty);        // -5 and 0.01 are accepted
-  line.qty += qty;
+<span class="hl-vuln">  const qty = Number(rawQty);        // -5 and 0.01 are accepted</span>  line.qty += qty;
 }
 
 function applyCoupon(code) {
-  if (code === "SAVE20") coupons++;  // can be repeated
-}
+<span class="hl-vuln">  if (code === "SAVE20") coupons++;  // can be repeated</span>}
 
 function placeOrder() {
   // trusts the total locked at "review" time
-  const charge = reviewed ? reviewed.total : total();
-  wallet -= charge;                  // negative charge = free money
-}</code></pre>
+<span class="hl-vuln">  const charge = reviewed ? reviewed.total : total();</span><span class="hl-vuln">  wallet -= charge;                  // negative charge = free money</span>}</code></pre>
       </figure>
     </section>
 
@@ -73,13 +69,9 @@ function placeOrder() {
       <div class="compare">
         <figure class="bad">
           <figcaption><span class="badge">Vulnerable</span></figcaption>
-<pre class="code"><code>const qty = Number(rawQty);
-
-if (code === "SAVE20") coupons++;
-
-const charge = reviewed
-  ? reviewed.total
-  : total();</code></pre>
+<pre class="code"><code><span class="hl-vuln">const qty = Number(rawQty);</span>
+<span class="hl-vuln">if (code === "SAVE20") coupons++;</span>
+<span class="hl-vuln">const charge = reviewed</span><span class="hl-vuln">  ? reviewed.total</span><span class="hl-vuln">  : total();</span></code></pre>
         </figure>
         <figure class="good">
           <figcaption><span class="badge badge-solid">Fixed</span></figcaption>
@@ -110,14 +102,13 @@ if (total() !== reviewed.total)
     </section>
 
     <nav class="pager" aria-label="Lesson navigation">
-      <a class="btn btn-outline" href="redos-lab.html">&larr; Lab 1</a>
-      <a class="btn btn-outline" href="logic-lab.html">Next: Lab 2 &rarr;</a>
+      <a class="btn btn-outline" href="logic-lab.html">Next: Lab 1 &rarr;</a>
     </nav>
   </main>
 
   <footer class="site-footer">
     <div class="container">
-      <span>&copy; SyberTeam. Educational project.</span>
+      <span>&copy; CyberTeam. Educational project.</span>
       <span>Runs entirely in your browser. Never test these techniques on systems you do not own.</span>
     </div>
   </footer>
