@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lab 3 Lesson: Prototype Pollution | SyberTeam</title>
-  <meta name="description" content="Learn how client-side prototype pollution works and how to fix it.">
+  <title>Lab 3 Lesson: Prototype Pollution (CWE-1321) | CyberTeam</title>
+  <meta name="description" content="Learn how client-side prototype pollution (CWE-1321) works and how to fix it.">
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
 </head>
@@ -13,13 +13,13 @@
 
   <header class="site-header">
     <div class="container nav">
-      <a class="brand" href="index.html" aria-label="SyberTeam home"><span class="brand-mark" aria-hidden="true">S</span>SyberTeam</a>
+      <a class="brand" href="index.html" aria-label="CyberTeam home"><span class="brand-mark" aria-hidden="true">C</span>CyberTeam</a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
       <nav aria-label="Main">
         <ul id="nav-links" class="nav-links">
           <li><a href="index.html" data-nav="home">Home</a></li>
-          <li><a href="redos-lesson.html" data-nav="lab1">Lab 1</a></li>
-          <li><a href="logic-lesson.html" data-nav="lab2">Lab 2</a></li>
+          <li><a href="logic-lesson.html" data-nav="lab1">Lab 1</a></li>
+          <li><a href="redos-lesson.html" data-nav="lab2">Lab 2</a></li>
           <li><a href="proto-lesson.html" data-nav="lab3">Lab 3</a></li>
         </ul>
       </nav>
@@ -29,7 +29,7 @@
   <main id="main" class="container page lesson">
     <div class="page-head">
       <p class="crumb">LAB 3 &middot; LESSON</p>
-      <h1>Client-Side Prototype Pollution</h1>
+      <h1>Client-Side Prototype Pollution (CWE-1321)</h1>
       <p>How an attacker can add properties to <em>every</em> object in your page by abusing an unsafe merge.</p>
     </div>
 
@@ -39,7 +39,7 @@
 <pre class="code"><code>Object.prototype.isAdmin = true;
 const user = {};
 console.log(user.isAdmin);   // true, never set on user</code></pre>
-      <p>Prototype pollution happens when attacker-controlled input can reach <code>Object.prototype</code>, typically through <code>__proto__</code> or <code>constructor.prototype</code> keys in a URL, JSON or form that is processed by a recursive merge.</p>
+      <p><a href="https://cwe.mitre.org/data/definitions/1321.html" target="_blank" rel="noopener noreferrer">CWE-1321</a> (Improperly Controlled Modification of Object Prototype Attributes) describes the weakness: an application lets attacker-controlled input change the attributes of an object prototype. Prototype pollution happens when attacker-controlled input can reach <code>Object.prototype</code>, typically through <code>__proto__</code> or <code>constructor.prototype</code> keys in a URL, JSON or form that is processed by a recursive merge.</p>
       <div class="callout">
         <p><strong>Real-world impact.</strong> On its own pollution only changes defaults, but combined with a <strong>gadget</strong> (code that reads a property it assumed was undefined) it can bypass access checks or lead to DOM XSS, for example when an undefined option later flows into <code>innerHTML</code> or a script URL. Popular libraries such as lodash and jQuery have all shipped pollution bugs.</p>
       </div>
@@ -59,16 +59,14 @@ console.log(user.isAdmin);   // true, never set on user</code></pre>
   for (const key in source) {
     if (typeof source[key] === "object" &amp;&amp; source[key] !== null) {
       if (typeof target[key] !== "object") target[key] = {};
-      merge(target[key], source[key]);  // walks into __proto__
-    } else {
-      target[key] = source[key];
-    }
+<span class="hl-vuln">      merge(target[key], source[key]);  // walks into __proto__</span>    } else {
+<span class="hl-vuln">      target[key] = source[key];</span>    }
   }
   return target;
 }
 
 const config = merge({ theme: "light" }, userInput);
-if (config.isAdmin) showAdminPanel();   // gadget</code></pre>
+<span class="hl-vuln">if (config.isAdmin) showAdminPanel();   // gadget</span></code></pre>
       </figure>
     </section>
 
@@ -79,8 +77,7 @@ if (config.isAdmin) showAdminPanel();   // gadget</code></pre>
           <figcaption><span class="badge">Vulnerable</span></figcaption>
 <pre class="code"><code>for (const key in source) {
   // any key, inherited too
-  merge(target[key], source[key]);
-}
+<span class="hl-vuln">  merge(target[key], source[key]);</span>}
 const config = merge({}, input);</code></pre>
         </figure>
         <figure class="good">
@@ -112,14 +109,14 @@ const config = safeMerge(
     </section>
 
     <nav class="pager" aria-label="Lesson navigation">
-      <a class="btn btn-outline" href="logic-lab.html">&larr; Lab 2</a>
+      <a class="btn btn-outline" href="redos-lab.html">&larr; Lab 2</a>
       <a class="btn btn-outline" href="proto-lab.html">Next: Lab 3 &rarr;</a>
     </nav>
   </main>
 
   <footer class="site-footer">
     <div class="container">
-      <span>&copy; SyberTeam. Educational project.</span>
+      <span>&copy; CyberTeam. Educational project.</span>
       <span>Runs entirely in your browser. Never test these techniques on systems you do not own.</span>
     </div>
   </footer>
