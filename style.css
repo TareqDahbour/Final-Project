@@ -1,5 +1,5 @@
 /* =====================================================================
-   SyberTeam — shared stylesheet
+   CyberTeam — shared stylesheet
    Strict monochrome DARK theme: blacks, grays and white only.
    Every colour used below is defined as a CSS variable in :root.
    Note: the raw scale is inverted for dark mode. --white is the darkest
@@ -36,6 +36,12 @@
   --focus: var(--black);
   --inverse-bg: var(--black);
   --inverse-text: var(--white);
+
+  /* Code highlights (the only non-gray colours, used purely as a signal) */
+  --vuln-bg: rgba(220, 38, 38, 0.2);
+  --vuln-border: #ef4444;
+  --fix-bg: rgba(34, 197, 94, 0.13);
+  --fix-border: #22c55e;
 
   /* Shape, shadow, type, motion */
   --radius: 14px;
@@ -202,7 +208,6 @@ img, svg { max-width: 100%; }
   color: var(--text);
 }
 .badge-solid { background: var(--inverse-bg); color: var(--inverse-text); }
-.badge-mid { background: var(--gray-200); }
 
 /* ---------- 5. Cards ---------- */
 .card {
@@ -214,6 +219,8 @@ img, svg { max-width: 100%; }
   transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
 }
 .card + .card { margin-top: 1.25rem; }
+/* Cards inside grids are aligned by the grid, not stacked with a top margin */
+.grid-3 > .card, .team-grid > .card { margin-top: 0; }
 .card-hover:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--border-strong); }
 
 /* ---------- 6. Home page ---------- */
@@ -259,6 +266,20 @@ img, svg { max-width: 100%; }
 .lab-card .lab-num { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); }
 .lab-card p { margin: 0; color: var(--text-muted); flex: 1; }
 .lab-card .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.lab-card .card-foot .btn { margin-left: auto; }   /* Start button stays on the right */
+.cwe-tag {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-decoration: none;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 0.1rem 0.65rem;
+  transition: background var(--transition), color var(--transition);
+}
+.cwe-tag:hover { background: var(--gray-100); color: var(--text); }
 .solved-tag { font-size: 0.8rem; font-weight: 700; }
 
 .team-grid {
@@ -266,22 +287,8 @@ img, svg { max-width: 100%; }
   gap: 1.25rem;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
 }
-.member { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
-.avatar {
-  display: grid;
-  place-items: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: var(--inverse-bg);
-  color: var(--inverse-text);
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 1.2rem;
-  margin-bottom: 0.4rem;
-}
+.member { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.9rem; }
 .member h3 { margin: 0; font-size: 1.05rem; }
-.member .role { margin: 0 0 0.6rem; color: var(--text-muted); font-size: 0.9rem; }
 
 /* ---------- 7. Footer ---------- */
 .site-footer {
@@ -351,7 +358,34 @@ pre.code,
   tab-size: 2;
 }
 code { font-family: var(--font-mono); font-size: 0.92em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
-pre.code code { background: none; padding: 0; font-size: inherit; }
+pre.code code { background: none; padding: 0; font-size: inherit; display: block; width: max-content; min-width: 100%; }
+
+/* Code lines (built by renderCode in script.js). Each line is a block, so no
+   "\n" text is needed between them and copy/paste stays free of blank lines. */
+.code-line { display: block; }
+
+/* Highlighted lines: full-width bar bleeding into the block padding */
+.hl-vuln,
+.hl-fix {
+  display: block;
+  margin: 0 -1.1rem;
+  padding: 0 1.1rem 0 calc(1.1rem - 3px);
+}
+.hl-vuln { background: var(--vuln-bg); border-left: 3px solid var(--vuln-border); }
+.hl-fix { background: var(--fix-bg); border-left: 3px solid var(--fix-border); }
+
+.code-legend { margin: 0.6rem 0 0; font-size: 0.85rem; color: var(--text-muted); }
+.code-legend::before {
+  content: "";
+  display: inline-block;
+  width: 1.4em;
+  height: 0.8em;
+  margin-right: 0.55em;
+  vertical-align: -0.05em;
+  background: var(--vuln-bg);
+  border-left: 3px solid var(--vuln-border);
+}
+.code-legend[data-mode="fixed"]::before { background: var(--fix-bg); border-left-color: var(--fix-border); }
 figure { margin: 0; }
 figcaption { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
 
@@ -364,6 +398,7 @@ figcaption { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; display
 .cta h2 { margin-bottom: 0.4em; }
 .cta p { color: var(--text-muted); }
 
+.pager .btn:only-child { margin-left: auto; }
 .pager {
   display: flex;
   justify-content: space-between;
