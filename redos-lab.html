@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lab 1: ReDoS | SyberTeam</title>
-  <meta name="description" content="Hands-on ReDoS lab: trigger catastrophic backtracking safely, then apply the fix.">
+  <title>Lab 2: ReDoS (CWE-1333) | CyberTeam</title>
+  <meta name="description" content="Hands-on ReDoS lab (CWE-1333): trigger catastrophic backtracking safely, then apply the fix.">
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
 </head>
@@ -13,13 +13,13 @@
 
   <header class="site-header">
     <div class="container nav">
-      <a class="brand" href="index.html" aria-label="SyberTeam home"><span class="brand-mark" aria-hidden="true">S</span>SyberTeam</a>
+      <a class="brand" href="index.html" aria-label="CyberTeam home"><span class="brand-mark" aria-hidden="true">C</span>CyberTeam</a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
       <nav aria-label="Main">
         <ul id="nav-links" class="nav-links">
           <li><a href="index.html" data-nav="home">Home</a></li>
-          <li><a href="redos-lesson.html" data-nav="lab1">Lab 1</a></li>
-          <li><a href="logic-lesson.html" data-nav="lab2">Lab 2</a></li>
+          <li><a href="logic-lesson.html" data-nav="lab1">Lab 1</a></li>
+          <li><a href="redos-lesson.html" data-nav="lab2">Lab 2</a></li>
           <li><a href="proto-lesson.html" data-nav="lab3">Lab 3</a></li>
         </ul>
       </nav>
@@ -28,7 +28,7 @@
 
   <main id="main" class="container page">
     <div class="page-head">
-      <p class="crumb">LAB 1 &middot; HANDS-ON</p>
+      <p class="crumb">LAB 2 &middot; HANDS-ON &middot; <a href="https://cwe.mitre.org/data/definitions/1333.html" target="_blank" rel="noopener noreferrer">CWE-1333</a></p>
       <h1>ReDoS: Username Validator</h1>
       <div class="goal">
         <strong>Your goal</strong>
@@ -109,17 +109,18 @@
         <span id="code-mode" class="badge">Vulnerable code</span>
       </div>
 <pre class="code"><code id="active-code"></code></pre>
+      <p id="code-legend" class="code-legend" data-mode="vuln">Highlighted = vulnerable code</p>
     </section>
 
     <nav class="pager" aria-label="Lab navigation">
-      <a class="btn btn-outline" href="redos-lesson.html">&larr; Lab 1 lesson</a>
-      <a class="btn btn-outline" href="logic-lesson.html">Next: Lab 2 lesson &rarr;</a>
+      <a class="btn btn-outline" href="redos-lesson.html">&larr; Lab 2 lesson</a>
+      <a class="btn btn-outline" href="proto-lesson.html">Next: Lab 3 lesson &rarr;</a>
     </nav>
   </main>
 
   <footer class="site-footer">
     <div class="container">
-      <span>&copy; SyberTeam. Educational project.</span>
+      <span>&copy; CyberTeam. Educational project.</span>
       <span>Runs entirely in your browser. Never test these techniques on systems you do not own.</span>
     </div>
   </footer>
